@@ -31,7 +31,21 @@ DATABASES = {
         'DATABASE_URL': os.environ.get("DATABASE_URL", "postgres://user:password@localhost:5432/your_db_name"),
     }
 }
-
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 CELERY_BROKER_URL = os.environ.get("REDIS_URL")
 
 CELERY_ACCEPT_CONTENT = ["json"]
