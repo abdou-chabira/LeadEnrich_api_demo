@@ -1,3 +1,4 @@
+![Lead Enrichment API](leadEnrichapi.png)
 
 # Lead Enrichment API
 
