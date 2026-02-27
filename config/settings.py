@@ -21,9 +21,15 @@ INSTALLED_APPS = [
 ]
 
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL")
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',  # or mysql, sqlite3, etc.
+        'NAME': os.environ.get("DB_NAME", "your_db_name"),
+        'USER': os.environ.get("DB_USER", "your_db_user"),
+        'PASSWORD': os.environ.get("DB_PASSWORD", "your_password"),
+        'HOST': os.environ.get("DB_HOST", "localhost"),  # or IP/hostname
+        'PORT': os.environ.get("DB_PORT", "5432"),       # optional, depends on DB
+        'DATABASE_URL': os.environ.get("DATABASE_URL", "postgres://user:password@localhost:5432/your_db_name"),
+    }
 }
 
 CELERY_BROKER_URL = os.environ.get("REDIS_URL")
