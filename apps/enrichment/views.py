@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 from apps.common.utils import rate_limit
 from .models import Lead
 from .tasks import enrich_lead, celery_ping
@@ -7,14 +8,12 @@ from django.db.models import Count
 from django.shortcuts import render, redirect
 from django.views import View
 import logging
-
-logger = logging.getLogger(__name__)
-
-# enrichment/views.py
 import redis
 import os
 from django.http import JsonResponse
 from django.contrib.admin.views.decorators import staff_member_required
+
+logger = logging.getLogger(__name__)
 
 @staff_member_required
 def debug_redis(request):
@@ -44,24 +43,26 @@ class EnrichLeadView(APIView):
         logger.info(f"API enrichment request from IP: {ip}")
         if not rate_limit(f"rate:{ip}"):
             logger.warning(f"Rate limit exceeded for IP: {ip}")
-            return Response({"error": "rate limit exceeded"}, status=429)
-
-        idempotency_key = request.headers.get("Idempotency-Key")
-        if idempotency_key:
-            existing = Lead.objects.filter(idempotency_key=idempotency_key).first()
-            if existing:
-                logger.info(f"Idempotent request: returning existing Lead ID: {existing.id}")
-                return Response({"lead_id": existing.id, "status": existing.status, "idempotent": True})
-
-        lead = Lead.objects.create(
-            email=request.data.get("email"),
-            idempotency_key=idempotency_key,
-            status="pending"
-        )
-        logger.info(f"Created Lead via API with ID: {lead.id}")
-        enrich_lead.delay(str(lead.id))
-        logger.info(f"Triggered async enrichment for Lead ID: {lead.id} via API")
-        return Response({"lead_id": lead.id, "status": "accepted"})
+            return Response({"error": "rate limit exceeded"}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        try:
+            idempotency_key = request.headers.get("Idempotency-Key")
+            if idempotency_key:
+                existing = Lead.objects.filter(idempotency_key=idempotency_key).first()
+                if existing:
+                    logger.info(f"Idempotent request: returning existing Lead ID: {existing.id}")
+                    return Response({"lead_id": existing.id, "status": existing.status, "idempotent": True}, status=status.HTTP_200_OK)
+            lead = Lead.objects.create(
+                email=request.data.get("email"),
+                idempotency_key=idempotency_key,
+                status="pending"
+            )
+            logger.info(f"Created Lead via API with ID: {lead.id}")
+            enrich_lead.delay(str(lead.id))
+            logger.info(f"Triggered async enrichment for Lead ID: {lead.id} via API")
+            return Response({"lead_id": lead.id, "status": "accepted"}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Error in EnrichLeadView: {e}")
+            return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class MonitoringView(APIView):
     def get(self, request):
