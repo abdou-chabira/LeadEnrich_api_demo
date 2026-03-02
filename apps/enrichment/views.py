@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from apps.common.utils import rate_limit
 from .models import Lead
-from .tasks import enrich_lead
+from .tasks import enrich_lead, celery_ping
 from django.db.models import Count
 from django.shortcuts import render, redirect
 from django.views import View
@@ -69,7 +69,20 @@ class MonitoringView(APIView):
         stats = Lead.objects.values("status").annotate(count=Count("id"))
         total = Lead.objects.count()
         logger.info(f"System stats: total_leads={total}, by_status={list(stats)}")
-        return Response({"total_leads": total, "by_status": stats, "system": "healthy"})
+        # Celery health check
+        celery_status = "fail"
+        try:
+            result = celery_ping.apply(timeout=3)
+            if result.get(timeout=3) == "pong":
+                celery_status = "ok"
+        except Exception as e:
+            logger.error(f"Celery health check failed: {e}")
+        return Response({
+            "total_leads": total,
+            "by_status": stats,
+            "system": "healthy",
+            "celery": celery_status
+        })
 
 class MonitoringUI(View):
     def get(self, request):

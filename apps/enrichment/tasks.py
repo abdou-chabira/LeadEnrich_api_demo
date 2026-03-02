@@ -23,3 +23,7 @@ def enrich_lead(self, lead_id):
         lead.retry_count += 1
         lead.save()
         raise self.retry(exc=exc, countdown=2 ** lead.retry_count)
+
+@shared_task
+def celery_ping():
+    return "pong"
