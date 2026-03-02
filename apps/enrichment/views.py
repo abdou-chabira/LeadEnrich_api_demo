@@ -10,6 +10,18 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# enrichment/views.py
+import redis
+import os
+from django.http import JsonResponse
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required
+def debug_redis(request):
+    r = redis.from_url(os.environ.get("REDIS_URL"))
+    keys = r.keys("*")
+    return JsonResponse({"keys": [k.decode() for k in keys]})
+
 def index(request):
     if request.method == "POST":
         email = request.POST.get("email")
