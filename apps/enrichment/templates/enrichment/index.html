@@ -5,11 +5,43 @@
     <meta charset="UTF-8">
     <title>Lead Enrichment</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body.dark-theme {
+            background-color: #0a1931 !important;
+            color: #e0e6ed !important;
+        }
+
+        .dark-theme .container {
+            background-color: #13204a !important;
+            border-radius: 10px;
+            padding: 2rem;
+        }
+
+        .dark-theme .form-control,
+        .dark-theme .form-label {
+            background-color: #1b263b !important;
+            color: #e0e6ed !important;
+        }
+
+        .dark-theme .btn-primary {
+            background-color: #185adb !important;
+            border-color: #185adb !important;
+        }
+
+        .dark-theme .btn-secondary,
+        .dark-theme .btn-info {
+            background-color: #10316b !important;
+            border-color: #10316b !important;
+        }
+    </style>
 </head>
 
-<body class="p-4">
+<body class="p-4" id="mainBody">
     <div class="container">
-        <h1>Lead Enrichment</h1>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1>Lead Enrichment</h1>
+            <button id="themeToggle" class="btn btn-outline-dark">Toggle Dark Theme</button>
+        </div>
         <form method="post">
             {% csrf_token %}
             <div class="mb-3">
@@ -22,6 +54,22 @@
         <a href="{% url 'results' %}" class="btn btn-secondary">View Recent Leads</a>
         <a href="{% url 'monitoring' %}" class="btn btn-info ms-2">System Monitoring</a>
     </div>
+    <script>
+        const toggleBtn = document.getElementById('themeToggle');
+        const body = document.getElementById('mainBody');
+        toggleBtn.addEventListener('click', function () {
+            body.classList.toggle('dark-theme');
+            if (body.classList.contains('dark-theme')) {
+                toggleBtn.classList.remove('btn-outline-dark');
+                toggleBtn.classList.add('btn-outline-light');
+                toggleBtn.textContent = 'Toggle Light Theme';
+            } else {
+                toggleBtn.classList.remove('btn-outline-light');
+                toggleBtn.classList.add('btn-outline-dark');
+                toggleBtn.textContent = 'Toggle Dark Theme';
+            }
+        });
+    </script>
 </body>
 
 </html>
